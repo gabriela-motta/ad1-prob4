@@ -1,0 +1,3 @@
+"0","sumarios = dados %>% "
+"0","    group_by(week_day, language) %>%"
+"0","    summarise(media = mean(users))"

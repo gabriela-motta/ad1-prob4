@@ -1,0 +1,24 @@
+"0","dados = read_csv(here(""github.csv"")) %>% "
+"0","  filter(file_extension %in% c(""js"", ""py""))"
+"2","Parsed with column specification:
+cols(
+  file_extension = col_character(),
+  month_day = col_integer(),
+  the_month = col_integer(),
+  the_year = col_integer(),
+  users = col_integer()
+)
+"
+"0","dados$language <- ifelse(dados$file_extension == ""js"", ""JavaScript"","
+"0","                 ifelse(dados$file_extension == ""py"", ""Python"", ""Other""))"
+"0","# Função que, dado um dia da semana, retorna se ele participa do final de semana ou não."
+"0","is_weekend = function(dia) {"
+"0"," anw = ifelse(dia == ""sexta"", TRUE,"
+"0","              ifelse(dia == ""sábado"", TRUE,"
+"0","                     ifelse(dia == ""domingo"", TRUE, FALSE)))"
+"0"," "
+"0"," return(anw)"
+"0","}"
+"0","dados = dados %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))"
+"0","dados = dados %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))"
+"0","dados = dados %>% mutate(weekend = is_weekend(week_day))"

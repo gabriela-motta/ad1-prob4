@@ -1,0 +1,4 @@
+"0","sumarios %>% "
+"0","  ggplot(aes(x = week_day, y = media, color = language)) + "
+"0","  geom_point() +"
+"0","  labs(color =""Linguagem"", x = ""Dia da Semana"", y = ""Quantidade de Usuários"")"

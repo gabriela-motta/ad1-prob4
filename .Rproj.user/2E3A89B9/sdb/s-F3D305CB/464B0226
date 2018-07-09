@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1531144459546.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "464B0226",
+    "lastKnownWriteTime" : 210364928,
+    "last_content_update" : 1531144459546,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "8A2BD146",
+        "caption" : "sumarios",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=sumarios&cache_key=8A2BD146",
+        "displayedObservations" : "14",
+        "environment" : "",
+        "object" : "sumarios",
+        "preview" : "0",
+        "totalObservations" : "14",
+        "variables" : "3"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

@@ -1,0 +1,54 @@
+---
+title: "cp1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+```
+
+# Prob 4, CP 1: Um problema pequeno
+
+```{r}
+dados = read_csv(here("github.csv")) %>% 
+  filter(file_extension %in% c("js", "py"))
+
+dados$language <- ifelse(dados$file_extension == "js", "JavaScript",
+                 ifelse(dados$file_extension == "py", "Python", "Other"))
+
+# Função que, dado um dia da semana, retorna se ele participa do final de semana ou não.
+is_weekend = function(dia) {
+ anw = ifelse(dia == "sexta", TRUE,
+              ifelse(dia == "sábado", TRUE,
+                     ifelse(dia == "domingo", TRUE, FALSE)))
+ 
+ return(anw)
+}
+
+dados = dados %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
+dados = dados %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))
+dados = dados %>% mutate(weekend = is_weekend(week_day))
+```
+
+```{r}
+sumarios = dados %>% 
+    group_by(week_day, language) %>%
+    summarise(media = mean(users))
+```
+
+## Para cada linguagem de programação, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
+```{r}
+sumarios %>% 
+  ggplot(aes(x = week_day, y = media, color = language)) + 
+  geom_point() +
+  labs(color ="Linguagem", x = "Dia da Semana", y = "Quantidade de Usuários")
+```
+
+
+## Existe uma diferença significativa entre a popularidade das duas linguagens nos fins de semana?
+```{r}
+
+```
+

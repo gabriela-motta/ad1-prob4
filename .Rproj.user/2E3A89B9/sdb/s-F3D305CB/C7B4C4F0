@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"cp1\"\noutput: html_document\n---\n\n```{r setup, include=FALSE}\nknitr::opts_chunk$set(echo = TRUE)\nlibrary(tidyverse)\nlibrary(here)\n```\n\n# Prob 4, CP 1: Um problema pequeno\n\n```{r}\ndados = read_csv(here(\"github.csv\")) %>% \n  filter(file_extension %in% c(\"js\", \"py\"))\n\ndados$language <- ifelse(dados$file_extension == \"js\", \"JavaScript\",\n                 ifelse(dados$file_extension == \"py\", \"Python\", \"Other\"))\n\n# Função que, dado um dia da semana, retorna se ele participa do final de semana ou não.\nis_weekend = function(dia) {\n anw = ifelse(dia == \"sexta\", TRUE,\n              ifelse(dia == \"sábado\", TRUE,\n                     ifelse(dia == \"domingo\", TRUE, FALSE)))\n \n return(anw)\n}\n\ndados = dados %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))\ndados = dados %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))\ndados = dados %>% mutate(weekend = is_weekend(week_day))\n```\n\n```{r}\nsumarios = dados %>% \n    group_by(week_day, language) %>%\n    summarise(media = mean(users))\n```\n\n## Para cada linguagem de programação, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?\n```{r}\nsumarios %>% \n  ggplot(aes(x = week_day, y = media, color = language)) + \n  geom_point() +\n  labs(color =\"Linguagem\", x = \"Dia da Semana\", y = \"Quantidade de Usuários\")\n```\n\n\n## Existe uma diferença significativa entre a popularidade das duas linguagens nos fins de semana?\n```{r}\n\n```\n\n",
+    "created" : 1531141893249.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3024128779",
+    "id" : "C7B4C4F0",
+    "lastKnownWriteTime" : 1531145397,
+    "last_content_update" : 1531145397253,
+    "path" : "~/Área de Trabalho/AD1/lab4/cp1.Rmd",
+    "project_path" : "cp1.Rmd",
+    "properties" : {
+        "last_setup_crc32" : "22515E6B954c4cde",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
