@@ -1,6 +1,13 @@
 ---
-title: "cp1"
-output: html_document
+title: "Prob 4, CP 1: Um problema pequeno"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -9,8 +16,7 @@ library(tidyverse)
 library(here)
 ```
 
-# Prob 4, CP 1: Um problema pequeno
-
+Utilizando uma amostra de dados da atividade global do github, vamos analisar o comportamento de edição dos usuários em relação à edição de arquivos durante a semana. Os dados brutos contém a contagem de quantas pessoas editaram arquivos com cada extensão de arquivo em cada dia de 2016 e 2017 no github. Para nossa análise vamos focar nas linguagens Python e JavaScript (extensões py e js).
 ```{r}
 dados = read_csv(here("github.csv")) %>% 
   filter(file_extension %in% c("js", "py"))
@@ -32,23 +38,48 @@ dados = dados %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))
 dados = dados %>% mutate(weekend = is_weekend(week_day))
 ```
 
+## Para cada linguagem de programação, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
+
+A popularidade será medida utilizando a média de usuários que editaram cada tipo de arquivo em cada dia da semana.
 ```{r}
 sumarios = dados %>% 
     group_by(week_day, language) %>%
     summarise(media = mean(users))
+
+sumarios$week_day <- factor(sumarios$week_day, levels=c("segunda-feira", "terça-feira","quarta-feira",
+                                                        "quinta-feira", "sexta-feira", "sábado", "domingo"))
 ```
 
-## Para cada linguagem de programação, há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
 ```{r}
 sumarios %>% 
   ggplot(aes(x = week_day, y = media, color = language)) + 
   geom_point() +
+  facet_grid(language ~.) +
   labs(color ="Linguagem", x = "Dia da Semana", y = "Quantidade de Usuários")
 ```
 
+As duas linguagens possuem um comportamento bem parecido: durante a semana têm uma média alta de edições, e nos finais de semana essa média cai para quase a metade do valor anterior.
 
 ## Existe uma diferença significativa entre a popularidade das duas linguagens nos fins de semana?
 ```{r}
-
+dados %>% 
+  group_by(weekend, language) %>%
+  summarise(media = mean(users)) %>%
+  filter(weekend == TRUE) %>%
+  ggplot(aes(x = weekend, y = media, fill = language)) + 
+  geom_bar(stat = "identity", position = "dodge", width = 0.2) +
+  labs(fill ="Linguagem", x = "Fim de Semana", y = "Quantidade de Usuários")
 ```
 
+A popularidade de JavaScript é quase o dobro da popularidade de Python. Isso acontece também (de forma menos acentuada) durante os dias de semana:
+```{r}
+dados %>% 
+  group_by(weekend, language) %>%
+  summarise(media = mean(users)) %>%
+  filter(weekend == FALSE) %>%
+  ggplot(aes(x = weekend, y = media, fill = language)) + 
+  geom_bar(stat = "identity", position = "dodge", width = 0.2) +
+  labs(fill ="Linguagem", x = "Fim de Semana", y = "Quantidade de Usuários")
+```
+
+Portanto essa diferença não é exclusiva dos finais de semana, e sim das linguagens. JavaScript é base para vários frameworks mais robustos que os frameworks Python, e por isso pode haver essa preferência maior.
