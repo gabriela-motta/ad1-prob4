@@ -1,0 +1,165 @@
+---
+title: "Prob 4, CP 3: Suas análises"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(xts)
+library(resample)
+```
+
+```{r}
+dados = read.csv("github.csv")
+dados = dados %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
+dados = dados %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))
+```
+
+
+Utilizando uma amostra de dados da atividade global do github, vamos analisar o comportamento de edição dos usuários em relação à edição de arquivos. Os dados brutos contém a contagem de quantas pessoas editaram arquivos com cada extensão de arquivo em cada dia de 2016 e 2017 no github. Vamos usar técnicas de inferência para fazer afirmações sobre toda a população a partir dos dados da amostra. A métrica usada para definir a popularidade será a mediana dos usuários que editaram os arquivos em determinado período de tempo.
+
+## As pessoas editam mais arquivos em algum dia da semana específico?
+
+```{r}
+dias_da_semana = c('segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', "sábado", "domingo")
+
+dados.semana = dados 
+
+experiment1 = data.frame()
+
+for(day in dias_da_semana) {
+  b = bootstrap(subset(dados.semana, week_day==day) , median(users))
+  days.median = CI.percentile(b, probs = c(.025, .975))
+  names(days.median) = c('X2.5', 'X97.5')
+  days.median$day = day
+  experiment1 = data.frame(rbind(experiment1, data.frame(days.median)))
+}
+```
+
+```{r}
+experiment1 %>% 
+  ggplot(aes(x=day, ymin=X2.5, ymax=X97.5)) + 
+  geom_errorbar(width = .2) + 
+  labs(x="Dia da semana", y="Intervalo de confiança")
+```
+
+Como os intervalos se sobrepõem para todos os dias da semana, então não podemos concluir que há um dia da semana em que as pessoas editem mais.
+
+### A média de edições durante a semana é maior que a média durante os finais de semana?
+
+Mudando a estatística de popularidade para a média.
+```{r}
+dados.semana2 = dados 
+
+experiment2 = data.frame()
+
+for(day in dias_da_semana) {
+  b = bootstrap(subset(dados.semana2, week_day==day) , mean(users))
+  days.mean = CI.percentile(b, probs = c(.025, .975))
+  names(days.mean) = c('X2.5', 'X97.5')
+  days.mean$day = day
+  experiment2 = data.frame(rbind(experiment2, data.frame(days.mean)))
+}
+```
+
+```{r}
+experiment2 %>% 
+  ggplot(aes(x=day, ymin=X2.5, ymax=X97.5)) + 
+  geom_errorbar(width = .2) + 
+  labs(x="Dia da semana", y="Intervalo de confiança")
+```
+
+Utilizando a média podemos identificar que nos sábados e domingos a popularidade é bem menor em relação aos outros dias.
+
+## Nos meses de férias (janeiro e julho) as edições são mais ou menos populares que nos outros meses?
+
+```{r}
+dados.2016 = dados %>% filter(the_year == 2016)
+dados.2017 = dados %>% filter(the_year == 2017)
+```
+
+Vamos utilizar apenas os dados do ano de 2016, pois 2017 não possui dados de todos os meses:
+```{r}
+timeline = dados %>% group_by(the_year, the_month) %>% mutate(users_month = sum(users))
+
+max = max(timeline$users_month) + 10000
+min = min(timeline$users_month) - 1000
+
+timeline %>%
+  ggplot(aes(x = the_month, y = users_month, colour = as.factor(the_year))) + 
+  geom_point() +
+  geom_line() +  
+  scale_x_continuous(breaks=c(1:12)) + 
+  ylim(min, max) +
+  labs(title = "Edições por Mês (em todas as linguagens)", x = "Mês" , y= "Número de usuários\nque fizeram edições", colour="Ano")
+```
+
+
+```{r}
+months = c(1:12)
+experiment3 = data.frame()
+
+for(m in months){
+  b = bootstrap(subset(dados.2016, the_month==m) , sd(users))
+  month.sd = CI.percentile(b, probs = c(.025, .975))
+  names(month.sd) = c('X2.5', 'X97.5')
+  month.sd$month = m
+  experiment3 = data.frame(rbind(experiment3, data.frame(month.sd)))
+}
+```
+
+```{r}
+experiment3 %>% 
+  ggplot(aes(x=month, ymin=X2.5, ymax=X97.5)) + 
+  geom_errorbar(width = .2) + 
+  labs(x="Mês", y="Intervalo de confiança") +
+  scale_x_discrete(limits=c('jan', 'fev', 'mar', 'abril', 'maio', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'))
+```
+
+A maioria dos intervalos se sobrepõe, mas é possível afirmar que o mês de Julho é menos popular que os meses de Janeiro a Maio.
+
+### O mês de Julho possui alguma semana com mais edições que as outras semanas?
+
+```{r}
+n_semana = function(dia) {
+  anw = ifelse(dia <= 8, '1', 
+        ifelse(dia > 8 & dia <= 16, '2',
+        ifelse(dia > 16 & dia <= 24, '3','4')))
+  return(anw)
+}
+
+dados$n_semana = n_semana(dados$month_day)
+```
+
+```{r}
+dados.nsemana = dados %>% filter(the_month == 7)
+
+experiment4 = data.frame()
+
+n_semana = c('1', '2', '3', '4')
+for(n in n_semana) {
+  b = bootstrap(subset(dados, n_semana==n) , median(users))
+  mes.n.md = CI.percentile(b, probs = c(.025, .975))
+  names(mes.n.md) = c('X2.5', 'X97.5') 
+  mes.n.md$n_semana = n
+  experiment4 = data.frame(rbind(experiment4, data.frame(mes.n.md)))
+}
+```
+
+```{r}
+experiment4 %>% 
+  ggplot(aes(x=n_semana, ymin=X2.5, ymax=X97.5)) + 
+  geom_errorbar(width = .2) + 
+  labs(x="Número da Semana", y="Intervalo de confiança")
+```
+
+Como visto em outra pergunta, não é possível afirmar que Julho possui uma semana mais popular porque os intervalos estão sobrepostos.
