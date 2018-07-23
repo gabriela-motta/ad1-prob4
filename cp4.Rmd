@@ -1,0 +1,84 @@
+---
+title: "Prob 4 CP 4: Testes de hipótese x ICs"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+  html_notebook:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+library(tidyverse)
+library(here)
+library(xts)
+library(resample)
+```
+
+Utilizando uma amostra de dados da atividade global do github, vamos analisar o comportamento de edição dos usuários em relação à edição de arquivos. Os dados brutos contém a contagem de quantas pessoas editaram arquivos com cada extensão de arquivo em cada dia de 2016 e 2017 no github.
+
+Nesta análise, iremos responder a uma pergunta já desenvolvida no checkpoint anterior. Mas agora iremos utilizar teste de hipótese e não intervalo de confiança para respondê-la.
+
+No teste de Hipótese, nós definimos uma hipótese de interesse com a qual queremos concluir algo sobre a população a partir da amostra. A partir dessa hipótese, definimos uma hipótese nula, que é a negativa de nossa hipótese de interesse.
+
+Hipótese nula (H0): o teste avalia evidência contra nossa hipótese (o termo 'nulo' carrega o sentido de 'não há diferença').
+Hipótese alternativa (H1): no que acreditamos e queremos confirmar.
+
+```{r}
+dados = read.csv("github.csv")
+dados = dados %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
+dados = dados %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))
+```
+
+## O mês de Julho possui alguma semana com mais edições que as outras semanas?
+
+Nessa análise definimos as hipóteses:
+
+* H0: não há diferença de edições entre a primeira semana e a i-semana (i variando de 2 a 4). 
+* H1: há diferença considerável de edições entre a primeira semana e a i-semana (i variando de 2 a 4).
+
+```{r}
+n_semana = function(dia) {
+  anw = ifelse(dia <= 8, '1', 
+        ifelse(dia > 8 & dia <= 16, '2',
+        ifelse(dia > 16 & dia <= 24, '3','4')))
+  return(anw)
+}
+
+dados$n_semana = n_semana(dados$month_day)
+dados.nsemana = dados %>% filter(the_month == 7)
+```
+
+```{r}
+dados.semana1 = dados.nsemana %>% filter(n_semana == 1)
+dados.semana2 = dados.nsemana %>% filter(n_semana == 2)
+dados.semana3 = dados.nsemana %>% filter(n_semana == 3)
+dados.semana4 = dados.nsemana %>% filter(n_semana == 4)
+```
+
+Realizando os testes de hipoteses para:
+
+* A primeira semana tem mais edições que a segunda?
+* A primeira semana tem mais edições que a terceira?
+* A primeira semana tem mais edições que a quarta?
+
+```{r}
+experiment1_2 = permutationTest2(data=dados.semana1, statistic=median(users), data2=dados.semana2)
+experiment1_3 = permutationTest2(data=dados.semana1, statistic=median(users), data2=dados.semana3)
+experiment1_4 = permutationTest2(data=dados.semana1, statistic=median(users), data2=dados.semana4)
+```
+
+```{r}
+experiment1_2$stats %>% t()
+
+experiment1_3$stats %>% t()
+
+experiment1_4$stats %>% t()
+```
+
+Um p-valor é uma medida de quanta evidência você tem contra a hipótese nula. Quanto menor o p-valor, mais evidência você tem. Deve-se combinar o p-valor com o nível de significância para tomar decisão sobre um dado teste de hipótese. Em tal caso, se o p-valor for menor que algum corte (usualmente 0,05, algumas vezes um pouco mais como 0,1 ou um pouco menos como 0,01) então você rejeita a hipótese nula.
+
+Como os p-valores são maiores que 0,1, existe pouca ou nenhuma evidência real contra H0, ou seja, é provável que não haja uma semana de julho com mais edições que as outras. No checkpoint anterior, os intervalos de confiança estavam sobrepostos, e não pudemos afirmar que havia uma semana mais popular.
